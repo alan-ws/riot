@@ -1,0 +1,17 @@
+[
+    {
+        "leagueId": "2b723888-f428-4a02-92ab-001dc33fa2a3",
+        "queueType": "RANKED_SOLO_5x5",
+        "tier": "SILVER",
+        "rank": "IV",
+        "summonerId": "x7mJ4Znk6loXCd22uVeVkf44dApucaKHVJeWhNsppJfVpNj2",
+        "summonerName": "vJMark",
+        "leaguePoints": 60,
+        "wins": 9,
+        "losses": 8,
+        "veteran": false,
+        "inactive": false,
+        "freshBlood": false,
+        "hotStreak": false
+    }
+]
