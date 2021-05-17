@@ -1,8 +1,37 @@
 const read = require('fs').readFile;
-const YOUR_REGION = "EUW1";
+const axios = require('axios');
+const YOUR_REGION = "euw1";
 const RANK_QUEUE = 420;
 const CURRENT_SEASON = 13;
 const SUMMONER_NAME = "vJMark";
+const API_KEY = "";
+const HEADER = {
+    "Accept-Language": "en-GB,en;q=0.5",
+    "Accept-Charset": "application/x-www-form-urlencoded; charset=UTF-8",
+    "X-Riot-Token": API_KEY
+}
+
+// ACROSS
+// Account level
+// Mastery across champs
+// Win streaks
+// Break a loosing streak
+// win 5 games per role in succession (win 5 games in a row per role)
+// ADC
+// not dying
+// gold to dmg ration
+// cs total
+// cs difference
+// Play all marksmen
+// Win 5 games in a row with the same AD
+// Play all marksmen 5 times
+// SUPPORT
+// JUNGLE
+// MID
+// TOP
+
+const baseUrl = `https://${YOUR_REGION}.api.riotgames.com/`;
+
 
 function print(any)
 {
@@ -75,14 +104,14 @@ function getMatchDetails(matchId)
                 largestMultiKill,
                 killingSprees,
                 longestTimeSpentLiving,
-                doubleKills,
-                tripleKills,
-                quadraKills,
-                pentaKills,
-                totalDamageDealt,
-                magicDamageDealt,
-                physicalDamageDealt,
-                trueDamageDealt,
+                doubleKills, // get a penta, get 2 penta, get 5 penta, get 10 penta
+                tripleKills, // get a penta, get 2 penta, get 5 penta, get 10 penta
+                quadraKills, // get a penta, get 2 penta, get 5 penta, get 10 penta
+                pentaKills, // get a penta, get 2 penta, get 5 penta, get 10 penta
+                totalDamageDealt, // 
+                magicDamageDealt, // magic radiants from you
+                physicalDamageDealt, // you hit physically hard
+                trueDamageDealt, // you are the true damage dealer
                 largestCriticalStrike,
                 totalDamageDealtToChampions,
                 magicDamageDealtToChampions,
@@ -93,32 +122,32 @@ function getMatchDetails(matchId)
                 damageSelfMitigated,
                 damageDealtToObjectives,
                 damageDealtToTurrets,
-                visionScore,
-                timeCCingOthers,
+                visionScore, // your team can see clearly - I can see clearly now
+                timeCCingOthers, // no one can escape you
                 totalDamageTaken,
                 magicalDamageTaken,
                 physicalDamageTaken,
                 trueDamageTaken,
                 goldEarned,
                 goldSpent,
-                turretKills,
-                inhibitorKills,
+                turretKills, // you take objectives - tower destroyer
+                inhibitorKills, // you take objectives - inhib destroyer
                 totalMinionsKilled,
                 neutralMinionsKilled,
                 neutralMinionsKilledTeamJungle,
                 neutralMinionsKilledEnemyJungle,
-                totalTimeCrowdControlDealt,
-                champLevel,
+                totalTimeCrowdControlDealt, 
+                champLevel, // if you are constantly ahead of your team mates or opponents in level by end of game or max level 18 in 10 games
                 visionWardsBoughtInGame,
-                sightWardsBoughtInGame,
-                wardsPlaced,
-                wardsKilled,
-                firstBloodKill,
-                firstBloodAssist,
-                firstTowerKill,
-                firstTowerAssist,
-                firstInhibitorKill,
-                firstInhibitorAssist,
+                sightWardsBoughtInGame, // you seek to bring light
+                wardsPlaced, // you are lighting the path 
+                wardsKilled, // you seek to make them blind
+                firstBloodKill, // are you the first blood king?
+                firstBloodAssist, // seeking to get people ahead?
+                firstTowerKill, // you take objectives - tower destroyer
+                firstTowerAssist, // you take objectives - tower destroyer
+                firstInhibitorKill, // you take objectives - inhib destroyer
+                firstInhibitorAssist, // you take objectives - inhib destroyer
                 timeline
             } = participant
 
@@ -154,68 +183,124 @@ function getMatches(summonerId)
 
 function getLeagueEntries(leagueId, tier)
 {
-    read('./data/leagueEntries.json', 'utf8', (err, data) => {
-        if (err)
-        {
-            console.log(`Error reading file from disk: ${err}`);
-        }
-        else
-        {
-            const {name, entries} = JSON.parse(data);
+    const allLeagueEntries = (leagueId) => `lol/league/v4/leagues/${leagueId}`
+    const res = await axios.get(baseUrl + allLeagueEntries(summonerId), {
+        headers: HEADER
+    });
 
-            // display your league name and players in the league
+    const {name, entries} = res.data;
+    // display your league name and players in the league
 
-            entries.forEach((value) => {
-                const {
-                    summonerId,
-                    summonerName,
-                    leaguePoints,
-                    rank,
-                    wins,
-                    losses,
-                    veteran,
-                    inactive,
-                    freshBlood,
-                    hotStreak
-                } = value;
-                // async build profiles(summonerId);
-            })
-        }
+    entries.forEach((value) => {
+        const {
+            summonerId,
+            summonerName,
+            leaguePoints,
+            rank,
+            wins,
+            losses,
+            veteran,
+            inactive,
+            freshBlood,
+            hotStreak
+        } = value;
     })
 }
 
 function getQueue(summonerId)
 {
-    read('./data/queues.json', 'utf8', (err, data) => {
-        if (err)
+    const allQueues = (summonerId) => `lol/league/v4/entries/by-summoner/${summonerId}`
+    const res = await axios.get(baseUrl + allQueues(summonerId), {
+        headers: HEADER
+    });
+
+    const { leagueId, tier, rank, leaguePoints, wins, losses, veteran, inactive, freshBlood, hotStreak } = res.data;
+    res.data.forEach((value) => {
+        if (value.queueType === "RANKED_SOLO_5x5")
         {
-            console.log(`Error reading file from disk: ${err}`);
-        }
-        else
-        {
-            JSON.parse(data).forEach((value) => {
-                if (value.queueType === "RANKED_SOLO_5x5")
-                {
-                    const { leagueId, tier, rank, leaguePoints, wins, losses, veteran, inactive, freshBlood, hotStreak } = value;
-                    // icons for veteran, freshblood, hotsreak, inactive
-                    // W:L ratio and stats
-                    // tier rank lp
-                    getLeagueEntries(leagueId, tier);
-                }
-            })
+            const { leagueId, tier, rank, leaguePoints, wins, losses, veteran, inactive, freshBlood, hotStreak } = value;
+            // icons for veteran, freshblood, hotsreak, inactive
+            // W:L ratio and stats
+            // tier rank lp
+            getLeagueEntries(leagueId, tier);
         }
     })
 }
 
-read('./data/summoner.json', 'utf8', (err, data) => {
-    if (err)
-    {
-        console.log(`Error reading file from disk: ${err}`);
-    }
-    else
-    {
-        const {id, accountId, name, profileIconId, summonerLevel} = JSON.parse(data)
-        getQueue(id)
-        getMatches(id)
-    }
-});
+async function getSummoner(summonerName)
+{
+    const summonerDetails = (summonerName) => `lol/summoner/v4/summoners/by-name/${summonerName}`
+    ///const summonerDetails = (encryptedAccountId) => `lol/summoner/v4/summoners/by-account/{encryptedAccountId}`
+    ///const summonerDetails = (encryptedSummonerId) => `lol/summoner/v4/summoners/{encryptedSummonerId}`
+
+    const res = await axios.get(baseUrl + summonerDetails(summonerName), {
+        headers: HEADER
+    });
+    
+    const {id, accountId, name, profileIconId, summonerLevel} = res.data
+    getQueue(id)
+    getMatches(id)
+}
+
+getSummoner("vJMark");
+
+// read('./data/leagueEntries.json', 'utf8', (err, data) => {
+//     if (err)
+//     {
+//         console.log(`Error reading file from disk: ${err}`);
+//     }
+//     else
+//     {
+//         const {name, entries} = JSON.parse(data);
+//         // display your league name and players in the league
+
+//         entries.forEach((value) => {
+//             const {
+//                 summonerId,
+//                 summonerName,
+//                 leaguePoints,
+//                 rank,
+//                 wins,
+//                 losses,
+//                 veteran,
+//                 inactive,
+//                 freshBlood,
+//                 hotStreak
+//             } = value;
+//             // async build profiles(summonerId);
+//         })
+//     }
+// })
+
+// read('./data/queues.json', 'utf8', (err, data) => {
+//     if (err)
+//     {
+//         console.log(`Error reading file from disk: ${err}`);
+//     }
+//     else
+//     {
+//         JSON.parse(data).forEach((value) => {
+//             if (value.queueType === "RANKED_SOLO_5x5")
+//             {
+//                 const { leagueId, tier, rank, leaguePoints, wins, losses, veteran, inactive, freshBlood, hotStreak } = value;
+//                 // icons for veteran, freshblood, hotsreak, inactive
+//                 // W:L ratio and stats
+//                 // tier rank lp
+//                 getLeagueEntries(leagueId, tier);
+//             }
+//         })
+//     }
+// })
+
+// read('./data/summoner.json', 'utf8', (err, data) => {
+//     if (err)
+//     {
+//         console.log(`Error reading file from disk: ${err}`);
+//     }
+//     else
+//     {
+//         const {id, accountId, name, profileIconId, summonerLevel} = JSON.parse(data)
+//         getQueue(id)
+//         getMatches(id)
+//     }
+// });
