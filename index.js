@@ -4,7 +4,7 @@ const YOUR_REGION = "euw1";
 const RANK_QUEUE = 420;
 const CURRENT_SEASON = 13;
 const SUMMONER_NAME = "vJMark";
-const API_KEY = "";
+const API_KEY = "RGAPI-76cab175-1829-48c1-a960-973e184cc40c";
 const HEADER = {
     "Accept-Language": "en-GB,en;q=0.5",
     "Accept-Charset": "application/x-www-form-urlencoded; charset=UTF-8",
@@ -30,6 +30,8 @@ const HEADER = {
 // MID
 // TOP
 
+let GLOBAL_PROFILE = {}
+let GLOBAL_STATS = {}
 const baseUrl = `https://${YOUR_REGION}.api.riotgames.com/`;
 
 
@@ -56,7 +58,7 @@ function getTeamData(team)
     } = team;
 }
 
-function getMatchDetails(matchId)
+async function getMatchDetails(matchId)
 {
     read('./data/matchId.json', 'utf8', (err, data) => {
         if (err)
@@ -158,7 +160,7 @@ function getMatchDetails(matchId)
     })
 }
 
-function getMatches(summonerId)
+async function getMatches(summonerId)
 {
     read('./data/matches.json', 'utf8', (err, data) => {
         if (err)
@@ -181,7 +183,7 @@ function getMatches(summonerId)
     })
 }
 
-function getLeagueEntries(leagueId, tier)
+async function getLeagueEntries(leagueId, tier)
 {
     const allLeagueEntries = (leagueId) => `lol/league/v4/leagues/${leagueId}`
     const res = await axios.get(baseUrl + allLeagueEntries(summonerId), {
@@ -189,7 +191,7 @@ function getLeagueEntries(leagueId, tier)
     });
 
     const {name, entries} = res.data;
-    // display your league name and players in the league
+    GLOBAL_PROFILE = {leagueName: name}
 
     entries.forEach((value) => {
         const {
@@ -207,27 +209,28 @@ function getLeagueEntries(leagueId, tier)
     })
 }
 
-function getQueue(summonerId)
+async function getQueue(summonerId)
 {
-    const allQueues = (summonerId) => `lol/league/v4/entries/by-summoner/${summonerId}`
-    const res = await axios.get(baseUrl + allQueues(summonerId), {
+    const allQueues = `lol/league/v4/entries/by-summoner/${summonerId}`
+    const res = await axios.get(baseUrl + allQueues, {
         headers: HEADER
     });
 
-    const { leagueId, tier, rank, leaguePoints, wins, losses, veteran, inactive, freshBlood, hotStreak } = res.data;
     res.data.forEach((value) => {
         if (value.queueType === "RANKED_SOLO_5x5")
         {
-            const { leagueId, tier, rank, leaguePoints, wins, losses, veteran, inactive, freshBlood, hotStreak } = value;
-            // icons for veteran, freshblood, hotsreak, inactive
-            // W:L ratio and stats
-            // tier rank lp
-            getLeagueEntries(leagueId, tier);
+            const { leagueId, tier, rank, leaguePoints, wins, losses, veteran, freshBlood, hotStreak } = value;
+            const winRate = ((wins + losses) / wins) *100
+            const loseRate = ((wins + losses) / losses) *100
+            const winLoseRatio = winRate / loseRate
+            GLOBAL_PROFILE = {...GLOBAL_PROFILE, leagueId, tier, rank, leaguePoints, wins, losses}
+            GLOBAL_STATS = {winRate, loseRate, winLoseRatio, veteran, freshBlood, hotStreak}
+            //getLeagueEntries(leagueId, tier);
         }
     })
 }
 
-async function getSummoner(summonerName)
+async function getSummonerByName(summonerName)
 {
     const summonerDetails = (summonerName) => `lol/summoner/v4/summoners/by-name/${summonerName}`
     ///const summonerDetails = (encryptedAccountId) => `lol/summoner/v4/summoners/by-account/{encryptedAccountId}`
@@ -238,11 +241,18 @@ async function getSummoner(summonerName)
     });
     
     const {id, accountId, name, profileIconId, summonerLevel} = res.data
-    getQueue(id)
-    getMatches(id)
+    GLOBAL_PROFILE = {id, accountId, name, profileIconId, summonerLevel};
+    await getQueue(id)
+    await getMatches(id)
 }
 
-getSummoner("vJMark");
+async function main()
+{
+    await getSummonerByName("vJMark");
+    console.log(GLOBAL_PROFILE)
+}
+
+main()
 
 // read('./data/leagueEntries.json', 'utf8', (err, data) => {
 //     if (err)
