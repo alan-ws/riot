@@ -48,38 +48,25 @@ let TEAM_STATS = {
     won: {},
     lost: {}
 }
-let CHAMPION_STATS = {
-    won: [{
-        me: 0,
-        team: [],
-        enemy: []
-    }],
-    lost: [{
-        me: 0,
-        team: [],
-        enemy: []
-    }]
-}
+let CHAMPION_STATS = []
 
 const baseUrl = `https://${YOUR_REGION}.api.riotgames.com/`;
 
-function competitveData(championId, teamId, participants, oIds)
+function competitveData(lane, championId, teamId, participants, oIds)
 {
     let teamL = []
     let teamW = []
     let enemyL = []
     let enemyW = []
+    let spells = []
+    let won = false
+    let lost = false
 
     for (let oId of oIds)
     {
         const oParticipant = participants[oId - 1];
         oParticipant.championId
-        oParticipant.spell1Id
-        oParticipant.spell2Id
-    
-        let {role, lane} = oParticipant.timeline
-        lane = lane === "NONE" ? "SUPPORT" : lane
-    
+        let {spell1Id, spell2Id} = oParticipant        
         oParticipant.stats.item0
         oParticipant.stats.item1
         oParticipant.stats.item2
@@ -87,16 +74,19 @@ function competitveData(championId, teamId, participants, oIds)
         oParticipant.stats.item4
         oParticipant.stats.item5
         oParticipant.stats.item6
-    
+        
         if (oParticipant.stats.win)
         {
             if (teamId == oParticipant.teamId)
             {
                 teamW.push(oParticipant.championId)
+                spells.push([spell1Id, spell2Id])
+                won = true
             }
             else
             {
                 enemyW.push(oParticipant.championId)
+                spells.push([spell1Id, spell2Id])
             }
         }
         else
@@ -104,20 +94,25 @@ function competitveData(championId, teamId, participants, oIds)
             if (teamId == oParticipant.teamId)
             {
                 teamL.push(oParticipant.championId)
+                lost = true
+                spells.push([spell1Id, spell2Id])
             }
             else
             {
                 enemyL.push(oParticipant.championId)
+                spells.push([spell1Id, spell2Id])
             }
         }
     }
 
-    CHAMPION_STATS.won.push({
-        me: championId,
-        team: teamW,
-        enemy: enemyW,
-        won: true, 
-        lost: false
+    CHAMPION_STATS.push({
+        championId: championId,
+        team: teamW.length === 0 ? teamL : teamW,
+        enemy: enemyW.length === 0 ? enemyL : enemyW,
+        won: won, 
+        lost: lost,
+        lane: lane,
+        spells: spells
     })
 }
 
@@ -332,20 +327,11 @@ async function getMatchDetails(matchId)
         firstInhibitorAssist, // you take objectives - inhib destroyer
     } = stats
 
-    competitveData(championId, teamId, participants, oIds)
-
-    // if (win)
-    // {
-    //     CHAMPION_STATS.won[CHAMPION_STATS.won.length - 1].me = championId
-    // }
-    // else
-    // {
-    //     CHAMPION_STATS.lost[CHAMPION_STATS.lost.length - 1].me = championId
-    // }
-
+            
     let {role, lane} = timeline
-
+    
     lane = lane === "NONE" ? "SUPPORT" : lane
+    competitveData(lane, championId, teamId, participants, oIds)
 
     if (POSITION.role[role])
     {
