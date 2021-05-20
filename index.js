@@ -1,10 +1,9 @@
-const read = require('fs').readFile;
 const axios = require('axios');
 const YOUR_REGION = "euw1";
 const RANK_QUEUE = 420;
 const CURRENT_SEASON = 13;
 const SUMMONER_NAME = "vJMark";
-const API_KEY = "";
+const API_KEY = "RGAPI-76cab175-1829-48c1-a960-973e184cc40c";
 const HEADER = {
     "Accept-Language": "en-GB,en;q=0.5",
     "Accept-Charset": "application/x-www-form-urlencoded; charset=UTF-8",
@@ -34,10 +33,38 @@ const HEADER = {
 
 let PROFILE = {}
 let STATS = {
-    gameDuration: 0
+    gameDuration: 0,
+    first: {}
 }
 let CHALLENGES = {
-    gameDuration: 0
+    // gameTime: {
+    //     achieved: false,
+    //     currentState: 0,
+    //     targetState: 0
+    // }
+    firsts: {
+        stats: STATS.first,
+        complete: false,
+        average: {
+            achieved: false,
+            currentState: 0,
+            targetState: 28
+        },
+        five: {
+            achieved: false,
+            currentState: 0,
+            targetState: 0
+        },
+        ten: {},
+        twenty: {
+            achieved: false,
+            currentState: 0,
+            targetState: 0
+        },
+        thirty: {},
+        fifty: {},
+        hundred: {}
+    }
 }
 let POSITION = {
     role: {},
@@ -265,6 +292,15 @@ async function getMatchDetails(matchId)
         timeline
     } = participant
 
+    // basis for most challenges
+    // average e.g. you take first turret on average 60% of the time
+    // 5 games
+    // 10 games
+    // 20 games
+    // 30 games
+    // 50 games
+    // 100 games
+
     const {
         win,
         item0, // if we see a player not using an item effective against opponents - encourage them to purchase it
@@ -275,12 +311,12 @@ async function getMatchDetails(matchId)
         item5,
         item6,
         kills, // improve KDA, K:A ratio for assassins
-        deaths, // 0 death games, 
+        deaths, // 0 death games, - I am immortal amoungst mortals
         assists, // set them up, and watch them get knocked down K:A ration for supports and tanks
         largestKillingSpree, 
         largestMultiKill,
         killingSprees,
-        longestTimeSpentLiving,
+        longestTimeSpentLiving, // never gonna die - separate to 0 deaths for games
         doubleKills, // get a penta, get 2 penta, get 5 penta, get 10 penta
         tripleKills, // get a penta, get 2 penta, get 5 penta, get 10 penta
         quadraKills, // get a penta, get 2 penta, get 5 penta, get 10 penta
@@ -301,22 +337,22 @@ async function getMatchDetails(matchId)
         damageDealtToTurrets,
         visionScore, // your team can see clearly - I can see clearly now
         timeCCingOthers, // no one can escape you
-        totalDamageTaken,
+        totalDamageTaken, // 2 options - you can take a lot of abused - but with deaths, you tank a lot but don't die
         magicalDamageTaken,
         physicalDamageTaken,
         trueDamageTaken,
-        goldEarned,
-        goldSpent,
+        goldEarned, // Richy-Rich
+        goldSpent, // Baller!!
         turretKills, // you take objectives - tower destroyer
         inhibitorKills, // you take objectives - inhib destroyer
         totalMinionsKilled,
         neutralMinionsKilled,
         neutralMinionsKilledTeamJungle,
-        neutralMinionsKilledEnemyJungle,
+        neutralMinionsKilledEnemyJungle, // you pillage what others shant have
         totalTimeCrowdControlDealt, 
         champLevel, // if you are constantly ahead of your team mates or opponents in level by end of game or max level 18 in 10 games
-        visionWardsBoughtInGame,
-        sightWardsBoughtInGame, // you seek to bring light
+        visionWardsBoughtInGame,// you seek to bring light
+        sightWardsBoughtInGame, 
         wardsPlaced, // you are lighting the path 
         wardsKilled, // you seek to make them blind
         firstBloodKill, // are you the first blood king?
@@ -326,10 +362,9 @@ async function getMatchDetails(matchId)
         firstInhibitorKill, // you take objectives - inhib destroyer
         firstInhibitorAssist, // you take objectives - inhib destroyer
     } = stats
-
-            
+   
     let {role, lane} = timeline
-    
+
     lane = lane === "NONE" ? "SUPPORT" : lane
     competitveData(lane, championId, teamId, participants, oIds)
 
@@ -342,6 +377,38 @@ async function getMatchDetails(matchId)
     {
         POSITION.role[role] = 1;
         POSITION.lane[lane] = 1;
+    }
+
+    if (win)
+    {
+        // show what results matter when you win
+    }
+    else
+    {
+
+    }
+
+    if (STATS.first)
+    {
+        STATS["first"] = {
+            bloodKill: firstBloodKill ? STATS["first"].bloodKill + 1 : STATS["first"].bloodKill,
+            bloodAssist: firstBloodAssist ? STATS["first"].bloodAssist + 1 : STATS["first"].bloodAssist,
+            towerKills: firstTowerKill ? STATS["first"].towerKills + 1 : STATS["first"].towerKills,
+            towerAssists: firstTowerAssist ? STATS["first"].towerAssists + 1 : STATS["first"].towerAssists,
+            inhibitorKill: firstInhibitorKill ? STATS["first"].inhibitorKill + 1 : STATS["first"].inhibitorKill,
+            inhibitorAssist: firstInhibitorAssist ? STATS["first"].inhibitorAssist + 1 : STATS["first"].inhibitorAssist
+        }
+    }
+    else
+    {
+        STATS["first"] = {
+            bloodKill: firstBloodKill ? 1 : 0,
+            bloodAssist: firstBloodAssist ? 1 : 0,
+            towerKills: firstTowerKill ? 1 : 0,
+            towerAssists: firstTowerAssist ? 1 : 0,
+            inhibitorKill: firstInhibitorKill ? 1 : 0,
+            inhibitorAssist: firstInhibitorAssist ? 1 : 0,
+        }
     }
 }
 
@@ -441,68 +508,7 @@ async function getSummonerByName(summonerName)
 async function main()
 {
     await getSummonerByName("vJMark");
-    print(CHAMPION_STATS)
+    print(STATS)
 }
 
 main()
-
-// read('./data/leagueEntries.json', 'utf8', (err, data) => {
-//     if (err)
-//     {
-//         console.log(`Error reading file from disk: ${err}`);
-//     }
-//     else
-//     {
-//         const {name, entries} = JSON.parse(data);
-//         // display your league name and players in the league
-
-//         entries.forEach((value) => {
-//             const {
-//                 summonerId,
-//                 summonerName,
-//                 leaguePoints,
-//                 rank,
-//                 wins,
-//                 losses,
-//                 veteran,
-//                 inactive,
-//                 freshBlood,
-//                 hotStreak
-//             } = value;
-//             // async build profiles(summonerId);
-//         })
-//     }
-// })
-
-// read('./data/queues.json', 'utf8', (err, data) => {
-//     if (err)
-//     {
-//         console.log(`Error reading file from disk: ${err}`);
-//     }
-//     else
-//     {
-//         JSON.parse(data).forEach((value) => {
-//             if (value.queueType === "RANKED_SOLO_5x5")
-//             {
-//                 const { leagueId, tier, rank, leaguePoints, wins, losses, veteran, inactive, freshBlood, hotStreak } = value;
-//                 // icons for veteran, freshblood, hotsreak, inactive
-//                 // W:L ratio and stats
-//                 // tier rank lp
-//                 getLeagueEntries(leagueId, tier);
-//             }
-//         })
-//     }
-// })
-
-// read('./data/summoner.json', 'utf8', (err, data) => {
-//     if (err)
-//     {
-//         console.log(`Error reading file from disk: ${err}`);
-//     }
-//     else
-//     {
-//         const {id, accountId, name, profileIconId, summonerLevel} = JSON.parse(data)
-//         getQueue(id)
-//         getMatches(id)
-//     }
-// });
