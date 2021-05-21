@@ -37,33 +37,46 @@ let STATS = {
     first: {}
 }
 let CHALLENGES = {
-    // gameTime: {
-    //     achieved: false,
-    //     currentState: 0,
-    //     targetState: 0
-    // }
     firsts: {
-        stats: STATS.first,
-        complete: false,
-        average: {
-            achieved: false,
-            currentState: 0,
-            targetState: 28
+        bloodKill: {
+            complete: false,
+            one: {
+                achieved: false,
+                currentState: 0,
+                targetState: 1,
+                coins: 20
+            },
+            five: {
+                achieved: false,
+                currentState: 0,
+                targetState: 5,
+                coins: 100
+            },
+            ten: {
+                achieved: false,
+                currentState: 0,
+                targetState: 10,
+                coins: 100
+            },
+            twenty: {
+                achieved: false,
+                currentState: 0,
+                targetState: 20,
+                coins: 300
+            },
+            fifty: {
+                achieved: false,
+                currentState: 0,
+                targetState: 50,
+                coins: 100
+            },
+            hundred: {
+                achieved: false,
+                currentState: 0,
+                targetState: 100,
+                coins: 100
+            }
         },
-        five: {
-            achieved: false,
-            currentState: 0,
-            targetState: 0
-        },
-        ten: {},
-        twenty: {
-            achieved: false,
-            currentState: 0,
-            targetState: 0
-        },
-        thirty: {},
-        fifty: {},
-        hundred: {}
     }
 }
 let POSITION = {
@@ -145,7 +158,7 @@ function competitveData(lane, championId, teamId, participants, oIds)
 
 function print(any)
 {
-    console.log(any)
+    console.log(JSON.stringify(any, null, 4))
 }
 
 function getTeamData(team)
@@ -242,6 +255,73 @@ function getTeamData(team)
     }
 }
 
+function check(data)
+{
+    if (!data.achieved)
+    {
+        data.currentState += 1
+        if (data.currentState === data.targetState)
+        {
+            data.achieved = true;
+        }
+    }
+}
+function reset(data)
+{
+    for (let part of Object.values(data))
+    {
+        if (!part.achieved) part.currentState = 0;
+    }
+}
+
+function allFirstChallenges(
+    firstBloodKill, firstBloodAssist, firstTowerKill, firstTowerAssist, firstInhibitorKill, firstInhibitorAssist
+)
+{
+    if (firstBloodKill && !CHALLENGES.firsts.bloodKill.complete)
+    {
+        for (let fbk of Object.values(CHALLENGES.firsts.bloodKill))
+        {
+            check(fbk)
+        }
+    }
+    // else if (firstBloodAssist && !CHALLENGES.firsts.bloodAssist.complete)
+    // {
+    //     for (let fbk of Object.values(CHALLENGES.firsts.bloodAssist))
+    //     {
+    //         check(fbk)
+    //     }
+    // }
+    // else if (firstTowerKill && !CHALLENGES.firsts.towerKill.complete)
+    // {
+    //     for (let fbk of Object.values(CHALLENGES.firsts.towerKill))
+    //     {
+    //         check(fbk)
+    //     }
+    // }
+    // else if (firstTowerAssist && !CHALLENGES.firsts.towerAssist.complete)
+    // {
+    //     for (let fbk of Object.values(CHALLENGES.firsts.towerAssist))
+    //     {
+    //         check(fbk)
+    //     }
+    // }
+    // else if (firstInhibitorKill && !CHALLENGES.firsts.inhibitorKill.complete)
+    // {
+    //     for (let fbk of Object.values(CHALLENGES.firsts.inhibitorKill))
+    //     {
+    //         check(fbk)
+    //     }
+    // }
+    // else if (firstInhibitorAssist && !CHALLENGES.firsts.inhibitorAssist.complete)
+    // {
+    //     for (let fbk of Object.values(CHALLENGES.firsts.inhibitorAssist))
+    //     {
+    //         check(fbk)
+    //     }
+    // }
+}
+
 async function getMatchDetails(matchId)
 {
     const matches = `lol/match/v4/matches/${matchId}`
@@ -291,15 +371,6 @@ async function getMatchDetails(matchId)
         stats,
         timeline
     } = participant
-
-    // basis for most challenges
-    // average e.g. you take first turret on average 60% of the time
-    // 5 games
-    // 10 games
-    // 20 games
-    // 30 games
-    // 50 games
-    // 100 games
 
     const {
         win,
@@ -362,7 +433,19 @@ async function getMatchDetails(matchId)
         firstInhibitorKill, // you take objectives - inhib destroyer
         firstInhibitorAssist, // you take objectives - inhib destroyer
     } = stats
-   
+
+    allFirstChallenges(firstBloodKill, firstBloodAssist, firstTowerKill, firstTowerAssist, firstInhibitorKill, firstInhibitorAssist)
+    visionChallenges()
+    killingSprees(
+        largestKillingSpree, 
+        largestMultiKill,
+        killingSprees,
+        doubleKills,
+        tripleKills,
+        quadraKills,
+        pentaKills )
+
+
     let {role, lane} = timeline
 
     lane = lane === "NONE" ? "SUPPORT" : lane
@@ -508,7 +591,7 @@ async function getSummonerByName(summonerName)
 async function main()
 {
     await getSummonerByName("vJMark");
-    print(STATS)
+    print(CHALLENGES)
 }
 
 main()
