@@ -37,6 +37,86 @@ let STATS = {
     first: {}
 }
 let CHALLENGES = {
+    damages: {
+        total: {
+            complete: false,
+            one: {
+                achieved: false,
+                currentState: 0,
+                targetState: 1,
+                coins: 20
+            },
+            five: {
+                achieved: false,
+                currentState: 0,
+                targetState: 5,
+                coins: 100
+            },
+            ten: {
+                achieved: false,
+                currentState: 0,
+                targetState: 10,
+                coins: 100
+            },
+            twenty: {
+                achieved: false,
+                currentState: 0,
+                targetState: 20,
+                coins: 300
+            },
+            fifty: {
+                achieved: false,
+                currentState: 0,
+                targetState: 50,
+                coins: 100
+            },
+            hundred: {
+                achieved: false,
+                currentState: 0,
+                targetState: 100,
+                coins: 100
+            }
+        },
+        champion: {
+            complete: false,
+            one: {
+                achieved: false,
+                currentState: 0,
+                targetState: 1,
+                coins: 20
+            },
+            five: {
+                achieved: false,
+                currentState: 0,
+                targetState: 5,
+                coins: 100
+            },
+            ten: {
+                achieved: false,
+                currentState: 0,
+                targetState: 10,
+                coins: 100
+            },
+            twenty: {
+                achieved: false,
+                currentState: 0,
+                targetState: 20,
+                coins: 300
+            },
+            fifty: {
+                achieved: false,
+                currentState: 0,
+                targetState: 50,
+                coins: 100
+            },
+            hundred: {
+                achieved: false,
+                currentState: 0,
+                targetState: 100,
+                coins: 100
+            }
+        }
+    },
     firsts: {
         bloodKill: {
             complete: false,
@@ -322,6 +402,53 @@ function allFirstChallenges(
     // }
 }
 
+function doYouDealMostDmg(totalDamageDealt, totalDmg, totalDamageDealtToChampions, totalDmgToChamp )
+{
+    let dealtMostDmg = false;
+    let dealtMostDmgToChamps = false;
+    let currentHighestTotalDmg = totalDamageDealt;
+    let currentHighestChampionDmg = totalDamageDealtToChampions;
+
+    for (let index in totalDmg)
+    {
+        if (currentHighestTotalDmg < totalDmg[index])
+        {
+            currentHighestTotalDmg = totalDmg[index]
+        }
+
+        if (currentHighestChampionDmg < totalDmgToChamp[index])
+        {
+            currentHighestChampionDmg = totalDmgToChamp[index]
+        }
+    }
+
+    if (currentHighestTotalDmg <= totalDamageDealt)
+    {
+        dealtMostDmg = true;   
+    }
+
+    if (currentHighestChampionDmg <= totalDamageDealtToChampions)
+    {
+        dealtMostDmgToChamps = true;
+    }
+
+    if (dealtMostDmg && !CHALLENGES.damages.total.complete)
+    {
+        for (let dt of Object.values(CHALLENGES.damages.total))
+        {
+            check(dt)
+        }
+    }
+
+    if (dealtMostDmgToChamps && !CHALLENGES.damages.champion.complete)
+    {
+        for (let dc of Object.values(CHALLENGES.damages.champion))
+        {
+            check(dc)
+        }
+    }
+}
+
 async function getMatchDetails(matchId)
 {
     const matches = `lol/match/v4/matches/${matchId}`
@@ -347,6 +474,8 @@ async function getMatchDetails(matchId)
 
     let pId = 1;
     let oIds = []
+    let totalDmg = []
+    let totalDmgToChamp = []
 
     for (let x of participantIdentities)
     {
@@ -358,6 +487,8 @@ async function getMatchDetails(matchId)
         {
             // async buildProfile(x.player.accountId / summonerName / summonerId)
             oIds.push(x.participantId);
+            totalDmg.push(participants[x.participantId - 1].stats.totalDamageDealt)
+            totalDmgToChamp.push(participants[x.participantId - 1].stats.totalDamageDealtToChampions)
         }
     }
 
@@ -435,15 +566,16 @@ async function getMatchDetails(matchId)
     } = stats
 
     allFirstChallenges(firstBloodKill, firstBloodAssist, firstTowerKill, firstTowerAssist, firstInhibitorKill, firstInhibitorAssist)
-    visionChallenges()
-    killingSprees(
-        largestKillingSpree, 
-        largestMultiKill,
-        killingSprees,
-        doubleKills,
-        tripleKills,
-        quadraKills,
-        pentaKills )
+    //visionChallenges()
+    // killingSprees(
+    //     largestKillingSpree, 
+    //     largestMultiKill,
+    //     killingSprees,
+    //     doubleKills,
+    //     tripleKills,
+    //     quadraKills,
+    //     pentaKills )
+    doYouDealMostDmg(totalDamageDealt, totalDmg, totalDamageDealtToChampions, totalDmgToChamp )
 
 
     let {role, lane} = timeline
